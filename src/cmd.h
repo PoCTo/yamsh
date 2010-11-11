@@ -9,11 +9,6 @@ typedef enum {
 	TRUE
 } bool;
 
-typedef struct List{
-	char* data;
-	struct List* next;
-} List;
-
 typedef struct Cmd {
 	char* exec; 
 	struct List* params;
