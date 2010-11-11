@@ -1,3 +1,6 @@
+#ifndef CMD_H
+#define CMD_H
+
 #define LINK_SEMICOLON   0
 #define LINK_BACKGROUND  10
 #define LINK_AND         20
@@ -17,3 +20,5 @@ typedef struct Cmd {
   struct Cmd* next;
   int linkType;
 } Cmd;
+
+#endif
