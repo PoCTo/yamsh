@@ -9,6 +9,7 @@ List* ListInit(){
 	a==(List*) realloc(a,sizeof(List));
 	a->next=NULL;
 	a->data=NULL;
+        a->prev=NULL;
 	return a;
 }
 
@@ -36,4 +37,6 @@ void ListClear(List** Lp){
 void ListNodeInsert(List* L,List* Ln){
 	Ln->next=L->next;
 	L->next=Ln;
+        Ln->prev=L;
+        if (Ln->next != 0) Ln->next->prev=Ln;
 }

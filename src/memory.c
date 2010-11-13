@@ -4,11 +4,15 @@
 
 /* Reallocates memory with error message if needed */
 void* myrealloc(void *ptr, size_t size){
-	void* ptr2=realloc(ptr,size);
-	while (ptr2==NULL){ 
+	if (ptr == NULL)
+          return malloc(size);
+       else
+          return realloc(ptr, size);
+
+	while (ptr==NULL){ 
 		printf("ERROR: realloc() failed, trying again\n");
 		sleep(1);
-		ptr2=realloc(ptr,size);
+		ptr=realloc(ptr,size);
 	}		
-	return ptr2;
+	return ptr;
 }
