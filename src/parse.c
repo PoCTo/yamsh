@@ -2,6 +2,7 @@
 #include "cmd.h"
 #include "parse.h"
 #include "memory.h"
+#include "tree.h"
 
 char* ReadMorpheme(char* s,int *i){
     int size=0,maxsize=1;
@@ -58,7 +59,7 @@ Cmd* ParseString(char *s){
     while (i<slen){
         switch (state){
             case INIT_NODE:
-                cmd=CmdInit();
+                cmd=TreeInit();
                 state=READ_CMD;
                 break;
 
