@@ -5,8 +5,8 @@
 
 /* Initializes List: data,next=NULL */
 List* ListInit(){
-	List* a;
-	a==(List*) realloc(a,sizeof(List));
+	List* a=NULL;
+	a=(List*)myrealloc(a,sizeof(List));
 	a->next=NULL;
 	a->data=NULL;
         a->prev=NULL;
@@ -14,8 +14,8 @@ List* ListInit(){
 }
 
 /* Puts string into List Node */
-void ListPutData(List* L, char* data){
-	L->data=(char*) myrealloc(L->data,strlen(data)*sizeof(char));
+void ListPutDataStr(List* L, char* data){
+	L->data=(char*) myrealloc(L->data,strlen(data));
 	strcpy(L->data,data);
 }
 
@@ -26,11 +26,10 @@ void ListClearNode(List* L){
 }
 
 /* Clears List*/
-void ListClear(List** Lp){
-	if ((*Lp)==NULL) return;
-	ListClear(&((*Lp)->next));
-	ListClearNode(*Lp);
-	*Lp=NULL;
+void ListClear(List* Lp){
+	if ((Lp)==NULL) return;
+	ListClear(Lp->next);
+	ListClearNode(Lp);
 }
 
 /* Inserts Node Ln into List after given Node L*/
@@ -39,4 +38,39 @@ void ListNodeInsert(List* L,List* Ln){
 	L->next=Ln;
         Ln->prev=L;
         if (Ln->next != 0) Ln->next->prev=Ln;
+}
+
+
+void* ListHead(List* L){
+    return L->data;
+}
+
+char* ListHeadStr(List* L){
+    return (char*) ListHead(L);
+}
+
+void* ListPush(List* L, void* data){
+  List* new_head = ListInit();
+  new_head->data=data;
+  new_head->next = L;
+  return new_head;
+}
+
+List* ListReverse(List* list){
+  List* prev = NULL;
+  while (list != NULL) {
+    List* next = list->next;
+    list->next = prev;
+    prev = list;
+    list = next;
+  }
+  return prev;
+}
+
+List* ListPop(List* list){
+  List* head;
+  head = list;
+  list = list->next;
+  ListClearNode(head);
+  return list;
 }
