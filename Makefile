@@ -1,6 +1,8 @@
 default: 
-	gcc-4 src/*.c -Wall -g -o yamsh
+	gcc src/*.c -Wall -g -o yamsh
 
 clean:
-	rm yamsh.exe
-	rm yamsh	
+	rm -f yamsh.exe
+	rm -f yamsh
+	rm -rf *.dump
+	rm -rf *.stackdump	
