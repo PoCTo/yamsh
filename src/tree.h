@@ -1,7 +1,7 @@
 #include "list.h"
 
-#ifndef STACK_H
-#define	STACK_H
+#ifndef TREE_H
+#define	TREE_H
 
 #define LINK_NULL        0x0
 #define LINK_BACKGROUND  0x1
@@ -17,8 +17,7 @@ typedef struct Tree{
     char* cmd;
     char *in,*out,*append;
     List* args;
-    List* expr;
-    struct Tree *left,*right;
+    struct Tree *parent,*left,*right;
 } Tree;
 
 Tree* TreeInit();
@@ -27,5 +26,6 @@ Tree* TreeNewOperator(char *operator);
 Tree* TreeNewSubshell(List* expression);
 void TreeFreeNode(Tree* node);
 void TreeFree(Tree* root);
-#endif	/* STACK_H */
+void TreeSwap(Tree* T1, Tree* T2);
+#endif	/* TREE_H */
 

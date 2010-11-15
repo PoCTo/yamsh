@@ -4,7 +4,7 @@
 #include "tree.h"
 #include "str.h"
 #include "list.h"
-
+#include <stdio.h>
 
 char* ReadMorpheme(char* s,int *i){
     int size=0,maxsize=1;
@@ -153,74 +153,9 @@ Str* ParseLex(char* s,Err* err,int* i){
     return S;
 }
 
-void begin_command(ParseContext *ctx, char *command_str){
-  Tree* command = NULL;
-  command= TreeInit();
-  command->cmd=command_str;
 
-  ctx->current_expr = ListPush(ctx->current_expr, command);
-  ctx->current_command = command;
-}
 
-void add_argument(ParseContext *ctx, char *arg){
-  ctx->current_command->args =
-    ListPush(ctx->current_command->args, arg);
-}
 
-void add_redirection(ParseContext *ctx, char *filename){
-  TreeAddRedirection(ctx->current_command, ctx->redirect_type, filename);
-}
-
-void add_operator(ParseContext *ctx, char *operator){
-  ctx->current_expr = ListPush(ctx->current_expr,
-      TreeNewOperator(operator));
-}
-
-void open_subshell(ParseContext *ctx){
-  ctx->expr_stack = ListPush(ctx->expr_stack, ctx->current_expr);
-  ctx->current_expr = NULL;
-}
-
-int close_subshell(ParseContext *ctx){
-  Tree* subshell;
-
-  if (ctx->expr_stack == NULL)
-    return 0;
-
-  subshell = TreeNewSubshell(ListReverse(ctx->current_expr));
-
-  ctx->current_expr = ListPush((List*)ListHead(ctx->expr_stack), subshell);
-  ctx->expr_stack = ListPop(ctx->expr_stack);
-  ctx->current_command = subshell;
-  return 1;
-}
-
-void fix_arguments_order(Tree* node){
-  List* subnodes;
-  if (node == NULL) return;
-  switch (node->type){
-    case LINK_COMMAND:
-      node->args = ListReverse(node->args);
-      break;
-    case LINK_SUBSHELL:
-      subnodes = node->expr;
-      while (subnodes != NULL)
-      {
-        fix_arguments_order((Tree*)ListHead(subnodes));
-        subnodes = subnodes->next;
-      }
-      break;
-    default:
-      break;
-  }
-}
-
-void free_command_list(List* list){
-  while (list != NULL){
-    TreeFree((Tree*)ListHead(list));
-    list = ListPop(list);
-  }
-}
 
 List* ParseBuildList(char* s, Err* err){
     List* L=NULL,*Lold=NULL;
@@ -268,123 +203,169 @@ MorphemeTypes ParseGetTokenClass(char* token){
     return TEXT;
 }
 
-ParseStates ParseProcessCMD(ParseContext *ctx, char* token){
-        switch (ParseGetTokenClass(token)){
-            case SUBSHELL_BEGIN:
-                open_subshell(ctx);
-                return CMD;
-            case SUBSHELL_END:
-                if (close_subshell(ctx))
-                    return REDIR;
-                else
-                    return PARSEERROR;
-            case TEXT:
-                begin_command(ctx, token);
-                return ARGS;
-            default:
-                return PARSEERROR;
+int OperatorType(char* S){
+    if (strlen(S)==1){
+        if(S[0]=='&') return LINK_BACKGROUND;
+        if(S[0]=='|') return LINK_PIPE;
+        if(S[0]==';') return LINK_SEMICOLON;
     }
-}
-
-ParseStates ParseProcessREDIR_FILE(ParseContext *ctx, char *token){
-  switch (ParseGetTokenClass(token)){
-    case TEXT:
-      add_redirection(ctx, token);
-      return REDIR;
-
-    default:
-      return PARSEERROR;
-  }
-}
-
-ParseStates ParseProcessREDIR(ParseContext *ctx, char *token){
-  switch (ParseGetTokenClass(token)){
-    case REDIRECT:
-      ctx->redirect_type = token;
-      return REDIR_FILE;
-
-    case OPER:
-      add_operator(ctx, token);
-      return CMD;
-
-    case SUBSHELL_END:
-      if (close_subshell(ctx))
-        return REDIR;
-      else
-        return PARSEERROR;
-    case TEXT:
-        add_argument(ctx, token);
-        return ARGS;
-    default:
-      return PARSEERROR;
-  }
-}
-
-ParseStates ParseProcessARGS(ParseContext *ctx, char *token)
-{
-  if (ParseGetTokenClass(token) == TEXT){
-    /* argument */
-    add_argument(ctx, token);
-    return ARGS;
-  }
-
-  /* not argument, then REDIR */
-  return ParseProcessREDIR(ctx, token);
-}
-
- ParseStates ParseProcessToken(ParseContext* ctx, ParseStates state, char* token){
-        if (state==CMD) return ParseProcessCMD(ctx,token);
-        if (state==REDIR) return ParseProcessREDIR(ctx,token);
-        if (state==REDIR_FILE) return ParseProcessREDIR_FILE(ctx,token);
-        if (state==ARGS) return ParseProcessARGS(ctx,token);
-        //No handler for PARSEERROR, as of terminal state
-        return 0;
-}
-
-Tree* ParseBuildTree(List* tokens, Err* err){
-    ParseContext ctx = {NULL, NULL, NULL, NULL};
-    ParseStates state = CMD;
-
-    /* Open top-level subshell */
-    state = ParseProcessToken(&ctx, state, "(");
-    while (tokens != NULL && state != PARSEERROR){
-        state = ParseProcessToken(&ctx, state, ListHeadStr(tokens));
-        tokens = tokens->next;
+    if (strlen(S)==2){
+        if (S[0]=='&' && S[1]=='&') return LINK_AND;
+        if (S[0]=='|' && S[1]=='|') return LINK_OR;
     }
-    /* Close top-level subshell */
-    if (state != PARSEERROR)
-      state = ParseProcessToken(&ctx, state, ")");
+    return LINK_NULL;
+}
 
-    /* Check result status */
-    if (state != PARSEERROR && state != REDIR_FILE &&
-      ctx.expr_stack == NULL &&
-      ctx.current_expr != NULL && ctx.current_expr->next==NULL){
-        /* success */
-        ListClear(ctx.current_expr);
-        fix_arguments_order(ctx.current_command);
-
-        err->pres = 0;
-        return ctx.current_command;
-    }
-    else {
-        /* fail */
-        List* stack;
-        /* free all CommandNode entities */
-        free_command_list(ctx.current_expr);
-        stack = ctx.expr_stack;
-        while (stack != NULL){
-            free_command_list(ListHead(stack));
-            stack = ListPop(stack);
+void ParseMorpheme(char* S, ParseStates* state, Tree** T){
+    static char* redirop=NULL;
+    redirop=myrealloc(redirop,3*sizeof(char));
+    Tree* newT=NULL;
+    switch (*state){
+        case CMD:{
+            switch (ParseGetTokenClass(S)){
+                case TEXT:
+                    StringPut(&((*T)->cmd),S);
+                    (*T)->type=LINK_COMMAND;
+                    *state=ARGS;
+                    break;
+                case SUBSHELL_BEGIN:
+                    newT=TreeInit();
+                    newT->type=LINK_SUBSHELL;
+                    newT->left=(*T);
+                    newT->parent=(*T)->parent;
+                    (*T)->parent=newT;
+                    if (newT->parent!=NULL){
+                        if (newT->parent->left==(*T)) newT->parent->left=newT;
+                        if (newT->parent->right==(*T)) newT->parent->right=newT;
+                    }
+                    *state=CMD;
+                    break;
+                case SUBSHELL_END:
+                    while((*T)!=NULL &&((*T)->type!=LINK_SUBSHELL)) *T=(*T)->parent;
+                    if (*T==NULL) *state=PARSEERROR;
+                    else *state=AFTERSUBSHELL;
+                    break;
+                default:
+                    *state=PARSEERROR;
+                    break;
+            }
+            break;
+        }
+        case ARGS:{
+            switch (ParseGetTokenClass(S)){
+                case TEXT:
+                    ListAdd(&((*T)->args),S);
+                    *state=ARGS;
+                    break;
+                case REDIRECT:
+                    strcpy(redirop,S);
+                    *state=REDIR;
+                    break;
+                case OPER:
+                    newT=TreeInit();
+                    newT->type=OperatorType(S);
+                    newT->parent=(*T)->parent;
+                    if (newT->parent!=NULL) {
+                        if (newT->parent->left==(*T)) newT->parent->left=newT;
+                        if (newT->parent->right==(*T)) newT->parent->right=newT;
+                    }
+                    (*T)->parent=newT;
+                    newT->left=(*T);
+                    newT->right=TreeInit();
+                    newT->right->parent=newT;
+                    *T=newT->right;
+                    *state=CMD;
+                    break;
+                case SUBSHELL_END:
+                    while((*T)!=NULL &&((*T)->type!=LINK_SUBSHELL)) *T=(*T)->parent;
+                    if (*T==NULL) *state=PARSEERROR;
+                    else *state=AFTERSUBSHELL;
+                    break;
+                default:
+                    *state=PARSEERROR;
+            }
+            break;
+        }
+        case REDIR:{
+            switch (ParseGetTokenClass(S)){
+                case TEXT:
+                    if (!strcmp(redirop,">")) StringPut(&((*T)->out),S);
+                    if (!strcmp(redirop,">>")) StringPut(&((*T)->append),S);
+                    if (!strcmp(redirop,"<")) StringPut(&((*T)->in),S);
+                    *state=ARGS;
+                    break;
+                default:
+                    *state=PARSEERROR;
+            }
+            break;
+        }
+        case AFTERSUBSHELL:{
+            switch (ParseGetTokenClass(S)){
+                case OPER:
+                    newT=TreeInit();
+                    newT->type=OperatorType(S);
+                    newT->parent=(*T)->parent;
+                    if (newT->parent!=NULL) {
+                        if (newT->parent->left==(*T)) newT->parent->left=newT;
+                        if (newT->parent->right==(*T)) newT->parent->right=newT;
+                    }
+                    (*T)->parent=newT;
+                    newT->left=(*T);
+                    newT->right=TreeInit();
+                    newT->right->parent=newT;
+                    *T=newT->right;
+                    *state=CMD;
+                    break;
+                case REDIRECT:
+                    *state=REDIR;
+                    break;
+                default:
+                    *state=PARSEERROR;
+            }
+            break;
         }
 
-
-        err->pres = 1;
-        //err->pres = 0;
-        err->err=myrealloc(err->err,50*sizeof(char));
-        err->err = "Syntax error\0";
-        return NULL;
-        // return ctx.current_command;
     }
 }
-   
+
+void ParseTreeFixNULL(Tree* T){
+    if (T==NULL) return;
+    if (T->type==LINK_NULL) {
+        TreeFreeNode(T);
+        if (T->parent!=NULL) {
+            if (T->parent->left==T) T->parent->left=NULL;
+            if (T->parent->right==T) T->parent->right=NULL;
+        }
+    }
+    ParseTreeFixNULL(T->left);
+    ParseTreeFixNULL(T->right);
+}
+
+Tree* ParseBuildTree(List* L,Err* E){
+    if (L==NULL) return NULL;
+    List* Lold;
+    Tree* Told;
+    Tree* T=TreeInit();
+    ParseStates state=CMD;
+    ParseMorpheme("(",&state,&T);
+    while (state!=PARSEERROR && L!=NULL){
+        Lold=L;
+        ParseMorpheme((char*)L->data,&state,&T);
+        L=L->next;
+    }
+    ParseMorpheme(")",&state,&T);
+    if (state==PARSEERROR){
+        E->pres=1;
+        E->err=realloc(E->err,(50+strlen(Lold->data)*sizeof(char)));
+        E->err="Syntax error near: \0";
+        strcpy((E->err)+strlen(E->err),(char*)Lold->data);
+        return NULL;
+    }
+    Told=T;
+    while (T->parent!=NULL) T=T->parent;
+    ParseTreeFixNULL(T);
+    return T;
+}
+
+
 

@@ -6,8 +6,14 @@
 
 
 
+
+
+
+
+
+
 typedef enum {
-    CMD=0,ARGS,REDIR,REDIR_FILE,PARSEERROR
+    CMD=0,ARGS,AFTERSUBSHELL,REDIR,PARSEERROR
 } ParseStates;
 
 typedef enum {

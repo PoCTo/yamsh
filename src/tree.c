@@ -7,9 +7,9 @@ Tree* TreeInit(){
     T=myrealloc(T,sizeof(Tree));
     T->args=NULL; T->in=NULL; T->out=NULL; T->append=NULL;
     T->type=LINK_NULL;
-    T->expr=NULL;
     T->left=NULL; T->right=NULL;
     T->cmd=NULL;
+    T->parent=NULL;
     return T;
 }
 
@@ -59,21 +59,13 @@ Tree* TreeNewSubshell(List* expression){
   Tree* node = TreeInit();
   node->type=LINK_SUBSHELL;
   node->cmd=NULL;
-  node->expr = expression;
   return node;
 }
 
 void TreeFreeNode(Tree* node){
-    if (node->expr != NULL){
-        List* expr = node->expr;
-        while (expr != NULL){
-            TreeFree((Tree*)ListHead(expr));
-            expr = ListPop(expr);
-        }
-    }
+    
     myfree(node->append);
     ListClear(node->args);
-    ListClear(node->expr);
     myfree(node->cmd);
     myfree(node->in);
     myfree(node->out);
@@ -90,4 +82,18 @@ void TreeFree(Tree* root){
   TreeFreeNode(root);
 }
 
+void TreeSwap(Tree* T1, Tree* T2){
+    int type=T1->type;
+    char* cmd=T1->cmd;
+    char *in=T1->in,*out=T1->out,*append=T1->append;
+    List* args=T1->args;
+    struct Tree *left=T1->left,*right=T1->right;
 
+    T1->type=T2->type; T1->cmd=T2->cmd;
+    T1->in=T2->in; T1->out=T2->out; T1->append=T2->append;
+    T1->args=T2->args; T1->left=T2->left; T1->right=T2->right;
+
+    T2->type=type; T2->cmd=cmd;
+    T2->in=in; T2->out=out; T2->append=append;
+    T2->args=args; T2->left=left; T2->right=right;
+}

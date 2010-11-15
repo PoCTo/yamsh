@@ -2,12 +2,12 @@
 #include "parse.h"
 #include <stdio.h>
 #include "tree.h"
-
+FILE* f;
 
 void testr(char* c){
     int i=0; Str* res; Err* err=ErrInit();
-    c="ls -la | (grep asd >/dev/null -u || echo \"Hernya\" ) &";
-    
+    //c="ls -la | (grep asd >/dev/null -u || echo \"Hernya\" ) &";
+    c="ls -la | (grep asd >/dev/null -u) &";
     /*res=ParseLex(c,err,NULL);
     printf("%s\n",res->s);
     res=ParseLex(c+3,err,NULL);
@@ -41,31 +41,40 @@ void TestReadMorpheme(){
 }
 
 void printnode(Tree* T){
-    if (T==NULL) {printf("NULL"); }
+    if (T==NULL) {printf("NULL"); return; }
+    fprintf(f,"node%d [shape=",T);
     switch (T->type){
         case LINK_SUBSHELL:
-            printf("Subshell\n");
+            printf("Subshell");
+            fprintf(f,"box, label=\"Subshell\"];\n");
             break;
         case LINK_COMMAND:
-            printf("Command: %s\n",T->cmd);
+            fprintf(f,"ellipse, label=%s];\n",T->cmd);
+            printf("%s",T->cmd);
             break;
         case LINK_NULL:
-            printf("Error!\n");
+            fprintf(f,"ellipse, label=\"NULL\"];\n");
+            printf("NULL");
             break;
         case LINK_AND:
-            printf("&&\n");
+            fprintf(f,"diamond, label=\"&&\"];\n");
+            printf("&&");
             break;
         case LINK_OR:
-            printf("||\n");
+            fprintf(f,"diamond, label=\"||\"];\n");
+            printf("||");
             break;
         case LINK_PIPE:
-            printf("|\n");
+            fprintf(f,"diamond, label=\"|\"];\n");
+            printf("|");
             break;
         case LINK_SEMICOLON:
-            printf(";\n");
+            fprintf(f,"diamond, label=\";\"];\n");
+            printf(";");
             break;
         case LINK_BACKGROUND:
-            printf("&\n");
+            fprintf(f,"diamond, label=\"&\"];\n");
+            printf("&");
             break;
     }
 
@@ -74,17 +83,28 @@ void printnode(Tree* T){
 void printtree(Tree* T){
     if (T==NULL){ return; }
     printnode(T);
-    printf("Sons:{");
-    printnode(T->left);
-    printnode(T->right);
+    if (T->left!=NULL)
+        fprintf(f,"node%d -> node%d;\n",T,T->left);
+    if (T->right!=NULL)
+        fprintf(f,"node%d -> node%d;\n",T,T->right);
+    printf("{");
+    printtree(T->left);
+    printf(",");
+    printtree(T->right);
     printf("}");
 }
 
 void TestTree(){
-    char *c="ls -la | (grep asd >   /dev/null -u || echo \"Hernya\" ) &\0";
+    char *c="ls -la |(wc -l)|(grep asd >/dev/null -u || test \"Hernya\" )||(cd /; rm -rf *) &";
+    //char *c="ls -la | (grep asd >/dev/null -u) &";
+    //c="ls >>/dev/null  &";
+    //c="asd";
     Err* E=ErrInit();
     List* L=ParseBuildList(c,E);
     if (E->pres==1) printf("Fuck");
     Tree* T=ParseBuildTree(L,E);
-    if (E->pres!=1) printtree(T); else printf("Fuck2");
+    f=fopen("/tmp/debug.dot","w");
+    fprintf(f,"digraph Good{\n");
+    if (E->pres!=1) printtree(T); else printf("%s\n",E->err);
+    fprintf(f,"}");
 }

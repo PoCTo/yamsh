@@ -14,8 +14,6 @@ void ListClear(List* Lp);
 void ListNodeInsert(List* L,List* Ln);
 char* ListHeadStr(List* L);
 void* ListHead(List* L);
-List* ListReverse(List* list);
-void* ListPush(List* L, void* data);
-List* ListPop(List* list);
 void ListPutDataStr(List* L, char* data);
+void ListAdd(List** L,char* s);
 #endif

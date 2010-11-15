@@ -1,5 +1,6 @@
 #include "str.h"
 #include "memory.h"
+#include <string.h>
 
 Str* StrInit(){
     Str* S=NULL;
@@ -36,6 +37,11 @@ void StrClear(Str* S){
 
 char StrLast(Str* S){
     return (S->s)[(S->len)-1];
+}
+
+void StringPut(char** dest,char* src){
+    *dest=(char*)myrealloc(*dest,strlen(src)*sizeof(char));
+    strcpy(*dest,src);
 }
 
 void StrFree(Str* S){

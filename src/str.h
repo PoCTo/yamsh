@@ -16,6 +16,7 @@ Err* ErrInit();
 void StrPutChar(Str* S, char c);
 char StrLast(Str* S);
 void StrFree(Str* S);
+void StringPut(char** dest,char* src);
 
 #endif	/* STR_H */
 

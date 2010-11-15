@@ -49,28 +49,15 @@ char* ListHeadStr(List* L){
     return (char*) ListHead(L);
 }
 
-void* ListPush(List* L, void* data){
-  List* new_head = ListInit();
-  new_head->data=data;
-  new_head->next = L;
-  return new_head;
-}
-
-List* ListReverse(List* list){
-  List* prev = NULL;
-  while (list != NULL) {
-    List* next = list->next;
-    list->next = prev;
-    prev = list;
-    list = next;
-  }
-  return prev;
-}
-
-List* ListPop(List* list){
-  List* head;
-  head = list;
-  list = list->next;
-  //ListClearNode(head);
-  return list;
+void ListAdd(List** L,char* s){
+    if (*L==NULL){
+        *L=ListInit();
+        ListPutDataStr(*L,s);
+        return;
+    }
+    while ((*L)->next!=NULL) (*L)=(*L)->next;
+    (*L)->next=ListInit();
+    (*L)->next->prev=(*L);
+    ListPutDataStr((*L)->next,s);
+    while ((*L)->prev!=NULL) (*L)=(*L)->prev;
 }
