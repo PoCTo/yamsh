@@ -30,8 +30,8 @@ void StrPutChar(Str* S,char c){
 void StrClear(Str* S){
     S->len=0;
     S->mem=0;
-    free(S->s);
-    free(S);
+    myfree(S->s);
+    myfree(S);
 }
 
 char StrLast(Str* S){
@@ -39,5 +39,5 @@ char StrLast(Str* S){
 }
 
 void StrFree(Str* S){
-    free(S->s); free(S);
+    myfree(S->s); myfree(S);
 }

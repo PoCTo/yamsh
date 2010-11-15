@@ -16,3 +16,10 @@ void* myrealloc(void *ptr, size_t size){
 	}		
 	return ptr;
 }
+
+void myfree(void* ptr){
+    //FILE* file=fopen("e:\\debug","a");
+    //printf("Freeing %16d\n",ptr);
+    //fclose(file);
+    free(ptr);
+}

@@ -41,6 +41,7 @@ void TestReadMorpheme(){
 }
 
 void printnode(Tree* T){
+    if (T==NULL) {printf("NULL"); }
     switch (T->type){
         case LINK_SUBSHELL:
             printf("Subshell\n");
@@ -71,12 +72,12 @@ void printnode(Tree* T){
 }
 
 void printtree(Tree* T){
-    if (T==NULL){ printf("NULL\n"); return; }
+    if (T==NULL){ return; }
     printnode(T);
-    printf('Sons:{');
+    printf("Sons:{");
     printnode(T->left);
     printnode(T->right);
-    printf('}');
+    printf("}");
 }
 
 void TestTree(){

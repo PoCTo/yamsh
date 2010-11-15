@@ -71,13 +71,13 @@ void TreeFreeNode(Tree* node){
             expr = ListPop(expr);
         }
     }
-    free(node->append);
+    myfree(node->append);
     ListClear(node->args);
     ListClear(node->expr);
-    free(node->cmd);
-    free(node->in);
-    free(node->out);
-    free(node);
+    myfree(node->cmd);
+    myfree(node->in);
+    myfree(node->out);
+    myfree(node);
 }
 
 void TreeFree(Tree* root){

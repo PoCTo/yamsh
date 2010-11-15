@@ -15,7 +15,7 @@ char* ReadMorpheme(char* s,int *i){
     while (((*i)<ssize)&&(s[*i]==' ')) (*i)++;
 
     if ((*i)==ssize){
-        free(res);
+        myfree(res);
         return NULL;
     }
 
@@ -215,10 +215,8 @@ void fix_arguments_order(Tree* node){
   }
 }
 
-void free_command_list(List* list)
-{
-  while (list != NULL)
-  {
+void free_command_list(List* list){
+  while (list != NULL){
     TreeFree((Tree*)ListHead(list));
     list = ListPop(list);
   }
@@ -234,7 +232,7 @@ List* ParseBuildList(char* s, Err* err){
         S=ParseLex(s, err,&i);
          
         if (S==NULL){
-            free(err);
+            myfree(err);
             err=err2;
             return NULL;
         }
@@ -246,7 +244,7 @@ List* ParseBuildList(char* s, Err* err){
         StrFree(S);
         /*printf("%s\n",S->s);*/
     }
-    free(err2);
+    myfree(err2);
     return Lold;
 }
 
@@ -314,7 +312,9 @@ ParseStates ParseProcessREDIR(ParseContext *ctx, char *token){
         return REDIR;
       else
         return PARSEERROR;
-
+    case TEXT:
+        add_argument(ctx, token);
+        return ARGS;
     default:
       return PARSEERROR;
   }
@@ -328,7 +328,7 @@ ParseStates ParseProcessARGS(ParseContext *ctx, char *token)
     return ARGS;
   }
 
-  /* not argument, do like REDIR */
+  /* not argument, then REDIR */
   return ParseProcessREDIR(ctx, token);
 }
 
@@ -377,10 +377,13 @@ Tree* ParseBuildTree(List* tokens, Err* err){
             stack = ListPop(stack);
         }
 
+
         err->pres = 1;
+        //err->pres = 0;
         err->err=myrealloc(err->err,50*sizeof(char));
         err->err = "Syntax error\0";
         return NULL;
+        // return ctx.current_command;
     }
 }
    

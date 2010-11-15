@@ -21,8 +21,8 @@ void ListPutDataStr(List* L, char* data){
 
 /* Clears elements of List Node and Node itself */
 void ListClearNode(List* L){
-	free(L->data);
-	free(L);
+	myfree(L->data);
+	myfree(L);
 }
 
 /* Clears List*/
@@ -71,6 +71,6 @@ List* ListPop(List* list){
   List* head;
   head = list;
   list = list->next;
-  ListClearNode(head);
+  //ListClearNode(head);
   return list;
 }
