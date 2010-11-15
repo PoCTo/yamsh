@@ -78,7 +78,8 @@ int CharOp(char c){
 
 Str* ParseLex(char* s,Err* err,int* i){
     int len=strlen(s);
-    Str* S=StrInit();
+    Str* S=NULL;
+    S=StrInit();
     int noStep=0;
     char c;
 
@@ -153,7 +154,8 @@ Str* ParseLex(char* s,Err* err,int* i){
 }
 
 void begin_command(ParseContext *ctx, char *command_str){
-  Tree* command = TreeInit();
+  Tree* command = NULL;
+  command= TreeInit();
   command->cmd=command_str;
 
   ctx->current_expr = ListPush(ctx->current_expr, command);
@@ -239,7 +241,7 @@ List* ParseBuildList(char* s, Err* err){
         i=i;
         
         if (L==NULL) { L=ListInit(); Lold=L;}
-        else { L->next=ListInit(); L=L->next;}
+        else { L->next=NULL; L->next=ListInit(); L=L->next;}
         ListPutDataStr(L,S->s);
         StrFree(S);
         /*printf("%s\n",S->s);*/
@@ -249,6 +251,10 @@ List* ParseBuildList(char* s, Err* err){
 }
 
 MorphemeTypes ParseGetTokenClass(char* token){
+    if (token==NULL) {
+        printf("FUCK");
+        return TEXT;
+    }
     if (strlen(token)==1 && (token[0]=='&' || token[0]=='|' || token[0]==';'))
         return OPER;
     if (strlen(token)==2 && (token[0]=='&' || token[0]=='|') && (token[0]==token[1]))

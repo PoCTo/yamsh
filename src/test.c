@@ -1,6 +1,7 @@
 #include "str.h"
 #include "parse.h"
 #include <stdio.h>
+#include "tree.h"
 
 
 void testr(char* c){
@@ -37,4 +38,52 @@ void TestReadMorpheme(){
     c="ls -la | (grep asd >   /dev/null -u || echo \"Hernya\" ) &";
     c="asd || asd\0";
     testr(c);
+}
+
+void printnode(Tree* T){
+    switch (T->type){
+        case LINK_SUBSHELL:
+            printf("Subshell\n");
+            break;
+        case LINK_COMMAND:
+            printf("Command: %s\n",T->cmd);
+            break;
+        case LINK_NULL:
+            printf("Error!\n");
+            break;
+        case LINK_AND:
+            printf("&&\n");
+            break;
+        case LINK_OR:
+            printf("||\n");
+            break;
+        case LINK_PIPE:
+            printf("|\n");
+            break;
+        case LINK_SEMICOLON:
+            printf(";\n");
+            break;
+        case LINK_BACKGROUND:
+            printf("&\n");
+            break;
+    }
+
+}
+
+void printtree(Tree* T){
+    if (T==NULL){ printf("NULL\n"); return; }
+    printnode(T);
+    printf('Sons:{');
+    printnode(T->left);
+    printnode(T->right);
+    printf('}');
+}
+
+void TestTree(){
+    char *c="ls -la | (grep asd >   /dev/null -u || echo \"Hernya\" ) &\0";
+    Err* E=ErrInit();
+    List* L=ParseBuildList(c,E);
+    if (E->pres==1) printf("Fuck");
+    Tree* T=ParseBuildTree(L,E);
+    if (E->pres!=1) printtree(T); else printf("Fuck2");
 }

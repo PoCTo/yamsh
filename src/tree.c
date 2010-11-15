@@ -3,7 +3,7 @@
 #include "string.h"
 
 Tree* TreeInit(){
-    Tree* T;
+    Tree* T=NULL;
     T=myrealloc(T,sizeof(Tree));
     T->args=NULL; T->in=NULL; T->out=NULL; T->append=NULL;
     T->type=LINK_NULL;

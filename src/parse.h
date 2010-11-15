@@ -30,6 +30,6 @@ char* ReadMorpheme(char* s,int *i);
 Tree* ParseString(char *s);
 Str* ParseLex(char* s,Err* err,int* inew);
 List* ParseBuildList(char* s, Err* err);
-
+Tree* ParseBuildTree(List* tokens, Err* err);
 #endif
 
