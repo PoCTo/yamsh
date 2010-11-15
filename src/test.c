@@ -5,7 +5,7 @@
 FILE* f;
 
 void testr(char* c){
-    int i=0; Str* res; Err* err=ErrInit();
+    Err* err=ErrInit();
     //c="ls -la | (grep asd >/dev/null -u || echo \"Hernya\" ) &";
     c="ls -la | (grep asd >/dev/null -u) &";
     /*res=ParseLex(c,err,NULL);
@@ -26,7 +26,7 @@ void testr(char* c){
     printf("%s\n",res->s);*/
     List* a=ParseBuildList(c,err);
     while (a!=NULL){
-        printf("%s\n",a->data);
+        printf("%s\n",(char*)a->data);
         a=a->next;
     }
 }
@@ -42,7 +42,7 @@ void TestReadMorpheme(){
 
 void printnode(Tree* T){
     if (T==NULL) {printf("NULL"); return; }
-    fprintf(f,"node%d [shape=",T);
+    fprintf(f,"node%d [shape=",(int)T);
     switch (T->type){
         case LINK_SUBSHELL:
             printf("Subshell");
@@ -84,9 +84,9 @@ void printtree(Tree* T){
     if (T==NULL){ return; }
     printnode(T);
     if (T->left!=NULL)
-        fprintf(f,"node%d -> node%d;\n",T,T->left);
+        fprintf(f,"node%d -> node%d;\n",(int)T,(int)T->left);
     if (T->right!=NULL)
-        fprintf(f,"node%d -> node%d;\n",T,T->right);
+        fprintf(f,"node%d -> node%d;\n",(int)T,(int)T->right);
     printf("{");
     printtree(T->left);
     printf(",");
@@ -103,7 +103,7 @@ void TestTree(){
     List* L=ParseBuildList(c,E);
     if (E->pres==1) printf("Fuck");
     Tree* T=ParseBuildTree(L,E);
-    f=fopen("/tmp/debug.dot","w");
+    f=fopen("debug.dot","w");
     fprintf(f,"digraph Good{\n");
     if (E->pres!=1) printtree(T); else printf("%s\n",E->err);
     fprintf(f,"}");

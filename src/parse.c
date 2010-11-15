@@ -324,7 +324,8 @@ void ParseMorpheme(char* S, ParseStates* state, Tree** T){
             }
             break;
         }
-
+        default:
+            *state=PARSEERROR;
     }
 }
 
