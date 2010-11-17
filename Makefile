@@ -1,5 +1,5 @@
 default: 
-	gcc-4 src/*.c -O0 -g -Wall -o yamsh
+	gcc-4 src/*.c -O0 -g -Wall -o build/yamsh
 	
 
 all: yamsh

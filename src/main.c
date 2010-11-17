@@ -7,7 +7,7 @@
 
 int main(int argc,char** argv){
     //TestTree();
-    printf("%d\n",ExecuteCmd("(ls &) && ls"));
-    printcommandtree("ls ","E:/tmp.dot");
-	return 0;
+    //printf("%d\n",ExecuteCmd("(ls &) && ls & ls"));
+    IfaceRun();
+    return 0;
 }

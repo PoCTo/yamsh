@@ -73,7 +73,7 @@ void TreeFreeNode(Tree* node){
 
 void TreeFree(Tree* root){
   if (root->left != NULL)
-    TreeFreeNode(root->right);
+    TreeFreeNode(root->left);
 
   if (root->right != NULL)
     TreeFreeNode(root->right);

@@ -223,7 +223,7 @@ int ExecuteTree(Tree* T){
                     perror("Exec B-G");
                     break;
                 case 0:
-                    switch (pid2=fork()){
+                    /*switch (pid2=fork()){
                         case -1:
                             perror("Exec B-G");
                             break;
@@ -237,7 +237,12 @@ int ExecuteTree(Tree* T){
                             fprintf(stderr,"[BG] Child [%d] exited with code %d\n",pid,status);
                             break;
                     }
-                    break;
+                    break;*/
+                    fprintf(stderr, "[BG] Spawned process [%d]\n",pid);
+                    if (T->left!=NULL) status=ExecuteTree(T->left);
+                    else status=0;
+                    fprintf(stderr,"[BG] Child [%d] exited with code %d\n",pid,status);
+                    exit(status);
                 default:
                     if (T->right!=NULL) return ExecuteTree(T->right);
                     else return 0;
