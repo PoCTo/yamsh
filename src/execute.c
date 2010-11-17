@@ -8,6 +8,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/wait.h>
+#include <sys/types.h>
+#include "parse.h"
+#include "execute.h"
 
 int file_exists(char * fileName){
    struct stat buf;
@@ -93,20 +96,40 @@ int ExecKillRedirections(Tree* T){
     return 0;
 }
 
+int ExecSetWritePipe(Tree* T, int p[2]){
+    T->outsaved=dup(1);
+    if (dup2(p[1],1)<0) { perror("ExecSetWritePipe"); return 1;}
+    close(p[0]);
+    close(T->outsaved);
+    return 0;
+}
+int ExecSetReadPipe(Tree* T, int p[2]){
+    T->insaved=dup(0);
+    if (dup2(p[0],0)<0) { perror("ExecSetWritePipe"); return 1;}
+    close(p[1]);
+    close(T->insaved);
+    return 0;
+}
+
 int ExecuteCmd(char* c){
     Err* E=ErrInit();
     Tree* T=ParseFull(c,E);
     if (E->pres==1){
         ExecError("Can not run command");
         ExecError(E->err);
+        return -1;
     } else {
         return ExecuteTree(T);
     }
+    TreeFree(T);
 }
 
 int ExecuteTree(Tree* T){
-    char* s;
-    int status;
+    //char* s;
+    int p[2];
+    pid_t pid,pid1,pid2;
+    int i=0;
+    int status=0,stat1=0,stat2=0;
     switch (T->type){
         case LINK_COMMAND:
             if (ExecSetRedirections(T)!=0)
@@ -114,6 +137,7 @@ int ExecuteTree(Tree* T){
             switch (fork()){
                 case -1:
                     perror("Forking Command");
+                    break;
                 case 0:
                     //printf("i'm child %s!\n",T->cmd);
                     //printf("baba %s\n",(BuildPtr(T->cmd,T->args))[0]);
@@ -133,6 +157,7 @@ int ExecuteTree(Tree* T){
         case LINK_SUBSHELL:
             if (ExecSetRedirections(T)!=0)
                 ExecError("Can not set redirections! Continuing w/o, be care!\n");
+
             if (T->left==NULL || T->right!=NULL){
                 ExecError("Unknown algorithm error!");
                 return 1;
@@ -140,11 +165,66 @@ int ExecuteTree(Tree* T){
             else {
                 status=ExecuteTree(T->left);
             }
+            
             if (ExecKillRedirections(T)!=0){
                 ExecError("Can not unset redirections >_< Exiting");
                 _exit(1);
             }
             return status;
+        case LINK_AND:
+            stat1=ExecuteTree(T->left);
+            if (stat1==0) stat2=ExecuteTree(T->right);
+            return !(!stat1 && !stat2);
+        case LINK_OR:
+            stat1=ExecuteTree(T->left);
+            if (stat1!=0) stat2=ExecuteTree(T->right);
+            return !(!stat1 || !stat2);
+        case LINK_SEMICOLON:
+            stat1=ExecuteTree(T->left);
+            stat2=ExecuteTree(T->right);
+            return stat2;
+        case LINK_PIPE:
+            if (T->left!=NULL) {
+                pipe(p);
+                switch (pid1=fork()){
+                    case -1:
+                        perror("Forking Command");
+                        break;
+                    case 0: //son
+                        ExecSetWritePipe(T,p);
+                        _exit(ExecuteTree(T->left));
+                        break;
+                    default: //father
+                        switch(pid2=fork()){
+                            case -1:
+                               perror("Forking Command");
+                               break;
+                            case 0:
+                                if (T->right==NULL) return 0;
+                                ExecSetReadPipe(T,p);
+                                _exit(ExecuteTree(T->right));
+                                break;
+                            default: //father
+                                close(p[1]); close(p[0]);
+                                for (i=0; i<2; i++){
+                                    pid=wait(&status);
+                                    if (pid==-1) {
+                                        perror("Exec Pipe");
+                                        break;
+                                    } else if (pid==pid1){
+                                        stat1=status;
+                                    } else if (pid==pid2){
+                                        stat2=status;
+                                    } else {
+                                        ExecError("WTF? Another Process there");
+                                    }
+                                }
+                                return stat2;                                
+                        }
+                }
+            }
+        case LINK_BACKGROUND:
+            break;
     }
     return 0;
 }

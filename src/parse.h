@@ -37,5 +37,6 @@ Tree* ParseString(char *s);
 Str* ParseLex(char* s,Err* err,int* inew);
 List* ParseBuildList(char* s, Err* err);
 Tree* ParseBuildTree(List* tokens, Err* err);
+Tree* ParseFull(char* c, Err* E);
 #endif
 

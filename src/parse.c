@@ -447,6 +447,7 @@ Tree* ParseFull(char* c, Err* E){
     if (E->pres==1) {
         return NULL;
     }
+    ListClear(L);
     return T;
 }
 
