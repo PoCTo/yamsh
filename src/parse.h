@@ -1,16 +1,14 @@
-#include "tree.h"
-#include "str.h"
-
 #ifndef PARSE_H
 #define	PARSE_H
 
-
-
-
-
-
-
-
+#include "tree.h"
+#include "str.h"
+#include <string.h>
+#include "memory.h"
+#include "tree.h"
+#include "str.h"
+#include "list.h"
+#include <stdio.h>
 
 typedef enum {
     CMD=0,ARGS,AFTERSUBSHELL,REDIR,PARSEERROR
@@ -31,8 +29,6 @@ typedef struct ParseContext{
   char* redirect_type;
 } ParseContext;
 
-
-char* ReadMorpheme(char* s,int *i);
 Tree* ParseString(char *s);
 Str* ParseLex(char* s,Err* err,int* inew);
 List* ParseBuildList(char* s, Err* err);

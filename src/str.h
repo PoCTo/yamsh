@@ -1,6 +1,9 @@
 #ifndef STR_H
 #define	STR_H
 
+#include "memory.h"
+#include <string.h>
+
 typedef struct Str{
     char* s;
     int mem,len;
@@ -13,6 +16,7 @@ typedef struct Err{
 
 Str* StrInit();
 Err* ErrInit();
+void ErrFree(Err* E);
 void StrPutChar(Str* S, char c);
 char StrLast(Str* S);
 void StrFree(Str* S);

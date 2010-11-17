@@ -1,15 +1,3 @@
-#include "tree.h"
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include "str.h"
-#include "memory.h"
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <sys/wait.h>
-#include <sys/types.h>
-#include "parse.h"
 #include "execute.h"
 
 int file_exists(char * fileName){
@@ -21,7 +9,6 @@ int file_exists(char * fileName){
    perror("file_exists:");
    return 0;
 }
-
 
 void ExecError(char* s){
     fprintf(stderr,"%s\n",s);
@@ -35,9 +22,10 @@ char **BuildPtr(char* cmd, List* args){
         i++;
         L=L->next;
     }
-    s=(char**)myrealloc(s,i+2);
-    len=i;
-    StringPut(&(s[0]),(char*)cmd);
+    s=(char**)myrealloc(s,(i+2)*sizeof(char*));
+    len=i+2;
+    s[0]=NULL;
+    
     for (i=1; i<=len; i++) s[i]=NULL;
     i=1; L=args;
     while (L!=NULL){
@@ -45,6 +33,7 @@ char **BuildPtr(char* cmd, List* args){
         i++;
         L=L->next; 
     }
+    StringPut(&(s[0]),cmd);
     return s;    
 }
 
@@ -125,15 +114,17 @@ int ExecuteCmd(char* c){
 }
 
 int ExecuteTree(Tree* T){
-    //char* s;
     int p[2];
     pid_t pid,pid1,pid2;
     int i=0;
     int status=0,stat1=0,stat2=0;
+    char **argsptr;
+    
     switch (T->type){
         case LINK_COMMAND:
             if (ExecSetRedirections(T)!=0)
                 ExecError("Can not set redirections! Continuing w/o, be care!\n");
+            argsptr=BuildPtr(T->cmd,T->args);
             switch (fork()){
                 case -1:
                     perror("Forking Command");
@@ -141,8 +132,8 @@ int ExecuteTree(Tree* T){
                 case 0:
                     //printf("i'm child %s!\n",T->cmd);
                     //printf("baba %s\n",(BuildPtr(T->cmd,T->args))[0]);
-                    execvp(T->cmd,BuildPtr(T->cmd,T->args));
-                    perror("fork");
+                    execvp(T->cmd,argsptr);
+                    perror("exec");
                     ExecError("Cannot fork to start program!");
                     break;
                 default:
@@ -151,6 +142,9 @@ int ExecuteTree(Tree* T){
                         _exit(1);
                     }
                     wait(&status);
+                    //fprintf(stderr,"%s,%s\n",*(&(argsptr[0])),argsptr[1]);
+                    //for (i=0;(argsptr[i])!=NULL;i++) free(argsptr[i]);
+                    //free(argsptr);
                     return status;
             }
             break;
@@ -224,6 +218,31 @@ int ExecuteTree(Tree* T){
                 }
             }
         case LINK_BACKGROUND:
+            switch (pid1=fork()){
+                case -1:
+                    perror("Exec B-G");
+                    break;
+                case 0:
+                    switch (pid2=fork()){
+                        case -1:
+                            perror("Exec B-G");
+                            break;
+                        case 0:
+                            if (T->left!=NULL) exit(ExecuteTree(T->left));
+                            else exit(0);
+                            break;
+                        default:
+                            fprintf(stderr, "[BG] Spawned process [%d]\n",pid);
+                            wait(&status);
+                            fprintf(stderr,"[BG] Child [%d] exited with code %d\n",pid,status);
+                            break;
+                    }
+                    break;
+                default:
+                    if (T->right!=NULL) return ExecuteTree(T->right);
+                    else return 0;
+                    break;
+            }
             break;
     }
     return 0;

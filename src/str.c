@@ -1,6 +1,4 @@
 #include "str.h"
-#include "memory.h"
-#include <string.h>
 
 Str* StrInit(){
     Str* S=NULL;
@@ -18,6 +16,11 @@ Err* ErrInit(){
     S->err=NULL;
     S->pres=0;
     return S;
+}
+
+void ErrFree(Err* E){
+    myfree(E->err);
+    myfree(E);
 }
 
 void StrPutChar(Str* S,char c){

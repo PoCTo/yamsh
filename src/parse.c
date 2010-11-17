@@ -1,58 +1,4 @@
-#include <string.h>
 #include "parse.h"
-#include "memory.h"
-#include "tree.h"
-#include "str.h"
-#include "list.h"
-#include <stdio.h>
-
-char* ReadMorpheme(char* s,int *i){
-    int size=0,maxsize=1;
-    int ssize=strlen(s);
-    char* res=NULL;
-    res=(char*)myrealloc(res,maxsize);
-
-    while (((*i)<ssize)&&(s[*i]==' ')) (*i)++;
-
-    if ((*i)==ssize){
-        myfree(res);
-        return NULL;
-    }
-
-    while ((*i)<ssize && (s[*i]!=((size>0&&s[0]=='"')?'"':' ')) &&
-           s[*i]!='#' && s[*i]!='&' && s[*i]!='|' &&
-           s[*i]!=';' && s[*i]!='(' && s[*i]!=')'
-           && s[*i]!='>' && s[*i]!='<'){
-        if (++size>maxsize){
-            maxsize*=2;
-            res=(char*)myrealloc(res,maxsize);
-        }
-        res[size-1]=s[*i];
-        (*i)++;
-    }
-
-    if (size!=0 && res[0]=='"') {
-        strcpy(res,res+sizeof(char));
-        size--;
-    }
-    if (size!=0 && res[size-1]=='"') {
-        res[size-1]=0;
-        size--;
-    }
-
-    if ((size==0) && ((*i)<ssize)){
-        res[size++]=s[*i];
-        (*i)++;
-    }
-    if (((*i)<ssize)
-       &&((*i)>0)&&((s[(*i)-1]=='|')||(s[(*i)-1]=='&')||(s[(*i-1)]=='>'))
-       && (s[(*i)]==s[(*i)-1]&&(size==1))){
-       res=(char*)myrealloc(res,2*sizeof(char));
-       res[1]=s[(*i)++];
-    }
-
-    return res;
-}
 
 /*Tree* ParseString(char *s){
     Tree* T=TreeInit();
@@ -151,7 +97,6 @@ Str* ParseLex(char* s,Err* err,int* i){
             default:
                 break;
         }
-        printf("%d\n",state);
         if (state==END ) {
             if (StrLast(S)!='\0') StrPutChar(S,'\0');
 
@@ -259,9 +204,6 @@ void ParseMorpheme(char* S, ParseStates* state, Tree** T){
                 case TEXT:
                     StringPut(&((*T)->cmd),S);
                     (*T)->type=LINK_COMMAND;
-                    if (!strcmp((*T)->cmd,"z")) {
-                        printf("3");
-                    }
                     *state=ARGS;
                     break;
                 case SUBSHELL_BEGIN:
@@ -441,13 +383,15 @@ Tree* ParseFull(char* c, Err* E){
     List* L=ParseBuildList(c,E);
     E->pres=0;
     if (E->pres==1) {
+        ListClear(L);
         return NULL;
     }
     T=ParseBuildTree(L,E);
+    ListClear(L);
     if (E->pres==1) {
+        TreeFree(T);
         return NULL;
     }
-    ListClear(L);
     return T;
 }
 

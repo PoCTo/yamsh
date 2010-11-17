@@ -1,7 +1,9 @@
-#include "list.h"
-
 #ifndef TREE_H
 #define	TREE_H
+
+#include "memory.h"
+#include <string.h>
+#include "list.h"
 
 #define LINK_NULL        0x0
 #define LINK_BACKGROUND  0x1

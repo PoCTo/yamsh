@@ -1,6 +1,10 @@
 #ifndef LIST_H
 #define LIST_H
 
+#include "memory.h"
+#include <string.h>
+#include <stdlib.h>
+
 typedef struct List{
 	void* data;
 	struct List* next;

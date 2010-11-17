@@ -1,6 +1,4 @@
-#include <stdlib.h>
-#include <unistd.h>
-#include <stdio.h>
+#include "memory.h"
 
 /* Reallocates memory with error message if needed */
 void* myrealloc(void *ptr, size_t size){

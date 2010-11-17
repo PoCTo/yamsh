@@ -1,6 +1,4 @@
 #include "tree.h"
-#include "memory.h"
-#include <string.h>
 
 Tree* TreeInit(){
     Tree* T=NULL;

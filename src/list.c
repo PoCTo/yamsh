@@ -1,7 +1,4 @@
 #include "list.h"
-#include "memory.h"
-#include <string.h>
-#include <stdlib.h>
 
 /* Initializes List: data,next=NULL */
 List* ListInit(){
