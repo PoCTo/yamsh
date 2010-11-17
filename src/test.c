@@ -95,15 +95,23 @@ void printtree(Tree* T){
 }
 
 void TestTree(){
-    char *c="ls -la |(wc -l)|(grep asd >/dev/null -u || test \"Hernya\" )||(cd /; rm -rf *) &";
+    char *c="ls -la |(wc -l)||(grep asd >/dev/null -u || test \"Hernya\" );(cd /; rm -rf *) &";
     //char *c="ls -la | (grep asd >/dev/null -u) &";
     //c="ls >>/dev/null  &";
     //c="asd";
+    //c="a&b&(c|d)&g&h||p&x&&(z) ";
     Err* E=ErrInit();
     List* L=ParseBuildList(c,E);
+    printf("List:\n");
+    List* L2=L;
+    while (L2!=NULL){
+        printf("\"%s\"",L2->data);
+        if (L2->next!=NULL) printf("->");
+        L2=L2->next;
+    }
     if (E->pres==1) printf("Fuck");
     Tree* T=ParseBuildTree(L,E);
-    f=fopen("debug.dot","w");
+    f=fopen("E:/dev/yamsh/debug.dot","w");
     fprintf(f,"digraph Good{\n");
     if (E->pres!=1) printtree(T); else printf("%s\n",E->err);
     fprintf(f,"}");

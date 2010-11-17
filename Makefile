@@ -1,5 +1,5 @@
 default: 
-	gcc src/*.c -Wall -o yamsh
+	gcc-4 src/*.c -O0 -g -Wall -o yamsh
 	
 
 all: yamsh

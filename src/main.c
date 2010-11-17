@@ -5,6 +5,7 @@
 #include "test.h"
 
 int main(int argc,char** argv){
-    TestTree();
+    //TestTree();
+    printf("%d\n",ExecuteCmd("cat >new COPYING"));
 	return 0;
 }

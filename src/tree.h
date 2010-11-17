@@ -18,6 +18,7 @@ typedef struct Tree{
     char *in,*out,*append;
     List* args;
     struct Tree *parent,*left,*right;
+    int insaved,outsaved;
 } Tree;
 
 Tree* TreeInit();

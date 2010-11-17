@@ -78,12 +78,13 @@ int CharOp(char c){
 
 Str* ParseLex(char* s,Err* err,int* i){
     int len=strlen(s);
+    static char op='\0';
     Str* S=NULL;
     S=StrInit();
     int noStep=0;
     char c;
-
     ParseLexStates prevstate,state=BLANK;
+    
     while ((*i)<len && s[*i]==' ') (*i)++;
     for (;(state!=ERROR && (*i)<=len);){
         c=s[*i];
@@ -92,9 +93,24 @@ Str* ParseLex(char* s,Err* err,int* i){
             case BLANK:
                 if (c=='"') state=QUOTE;
                 else if (CharOp(c)) {
-                    state=OPERATOR;
-                    StrPutChar(S,c);
-                } else if (c==' ') state=BLANK;
+                    if (S->len==0 && CharDoubleOp(c)){
+                        if ((*i)<len-1 && s[(*i)+1]==c){
+                            StrPutChar(S,c); StrPutChar(S,c); 
+                            StrPutChar(S,'\0');
+                            (*i)+=2;
+                            state=END;
+                        } else {
+                          StrPutChar(S,c); StrPutChar(S,'\0');
+                          (*i)++;
+                          state=END;
+                        }
+                    }
+                    if (S->len==0 && CharSimpleOp(c)){
+                        StrPutChar(S,c); StrPutChar(S,'\0');
+                        state=END;
+                        (*i)++;
+                    }
+                } else if (c==' ' || c=='\0') state=BLANK;
                 else {
                     StrPutChar(S,c);
                     state=WORD;
@@ -109,13 +125,13 @@ Str* ParseLex(char* s,Err* err,int* i){
                 } else if ((*i)==len-1) state=ERROR;
                 break;
             case OPERATOR:
-                if (c==StrLast(S) && CharDoubleOp(c)){
-                    StrPutChar(S,c); StrPutChar(S,'\0');
+                if (c==op && CharDoubleOp(c)){
+                    StrPutChar(S,c);StrPutChar(S,c); StrPutChar(S,'\0');
                     state=END;
                     (*i)++;
                 } else {
+                    StrPutChar(S,c);
                     StrPutChar(S,'\0');
-                    
                     state=END;
                 }
                 break;
@@ -124,7 +140,10 @@ Str* ParseLex(char* s,Err* err,int* i){
                 else if (c==' '){
                     /*StrPutChar(S,' ');*/
                     state=END;
-                } else if (CharOp(c)) state=OPERATOR;
+                } else if (CharOp(c)) {
+                    state=END;
+                    op=c;
+                }
                 else {
                     StrPutChar(S,c);
                 }
@@ -132,9 +151,10 @@ Str* ParseLex(char* s,Err* err,int* i){
             default:
                 break;
         }
+        printf("%d\n",state);
         if (state==END ) {
             if (StrLast(S)!='\0') StrPutChar(S,'\0');
-                       
+
             /*printf("%d\n",*i);*/
             return S;
         }
@@ -147,6 +167,13 @@ Str* ParseLex(char* s,Err* err,int* i){
             }
             i=NULL;
             return NULL;
+        }
+        if ((*i)>=len){
+            if (state==BLANK) return NULL;
+            if (state!=BLANK) {
+                if (StrLast(S)!='\0') StrPutChar(S,'\0');
+                return S;
+            }
         }
     }
     i=NULL;
@@ -166,11 +193,16 @@ List* ParseBuildList(char* s, Err* err){
         
         S=ParseLex(s, err,&i);
          
-        if (S==NULL){
-            myfree(err);
-            err=err2;
+        if (S==NULL && i<strlen(s)){
+            err->pres=err2->pres;
+            err->err=err2->err;
+            myfree(err2);
             return NULL;
         }
+        if (S==NULL && i>=strlen(s)){
+            break;
+        }
+
         i=i;
         
         if (L==NULL) { L=ListInit(); Lold=L;}
@@ -179,13 +211,14 @@ List* ParseBuildList(char* s, Err* err){
         StrFree(S);
         /*printf("%s\n",S->s);*/
     }
+    myfree(err2->err);
     myfree(err2);
     return Lold;
 }
 
 MorphemeTypes ParseGetTokenClass(char* token){
     if (token==NULL) {
-        printf("FUCK");
+        /*printf("FUCK");*/
         return TEXT;
     }
     if (strlen(token)==1 && (token[0]=='&' || token[0]=='|' || token[0]==';'))
@@ -226,6 +259,9 @@ void ParseMorpheme(char* S, ParseStates* state, Tree** T){
                 case TEXT:
                     StringPut(&((*T)->cmd),S);
                     (*T)->type=LINK_COMMAND;
+                    if (!strcmp((*T)->cmd,"z")) {
+                        printf("3");
+                    }
                     *state=ARGS;
                     break;
                 case SUBSHELL_BEGIN:
@@ -264,6 +300,19 @@ void ParseMorpheme(char* S, ParseStates* state, Tree** T){
                 case OPER:
                     newT=TreeInit();
                     newT->type=OperatorType(S);
+                    if (newT->type==LINK_AND || newT->type==LINK_OR){
+                        while ((*T)->parent->type!=LINK_SUBSHELL) (*T)=(*T)->parent;
+                    }
+                    if (newT->type==LINK_BACKGROUND || newT->type==LINK_SEMICOLON){
+                        while ((*T)->parent->type!=LINK_SUBSHELL
+                                && (*T)->parent->type!=LINK_AND
+                                && (*T)->parent->type!=LINK_OR) (*T)=(*T)->parent;
+                    }
+                    if (newT->type==LINK_BACKGROUND || newT->type==LINK_SEMICOLON){
+                        while ((*T)->parent->type!=LINK_SUBSHELL
+                                && (*T)->parent->type!=LINK_AND
+                                && (*T)->parent->type!=LINK_OR) (*T)=(*T)->parent;
+                    }
                     newT->parent=(*T)->parent;
                     if (newT->parent!=NULL) {
                         if (newT->parent->left==(*T)) newT->parent->left=newT;
@@ -304,6 +353,19 @@ void ParseMorpheme(char* S, ParseStates* state, Tree** T){
                 case OPER:
                     newT=TreeInit();
                     newT->type=OperatorType(S);
+                    if (newT->type==LINK_AND || newT->type==LINK_OR){
+                        while ((*T)->parent->type!=LINK_SUBSHELL) (*T)=(*T)->parent;
+                    }
+                    if (newT->type==LINK_BACKGROUND || newT->type==LINK_SEMICOLON){
+                        while ((*T)->parent->type!=LINK_SUBSHELL
+                                && (*T)->parent->type!=LINK_AND
+                                && (*T)->parent->type!=LINK_OR) (*T)=(*T)->parent;
+                    }
+                    if (newT->type==LINK_BACKGROUND || newT->type==LINK_SEMICOLON){
+                        while ((*T)->parent->type!=LINK_SUBSHELL
+                                && (*T)->parent->type!=LINK_AND
+                                && (*T)->parent->type!=LINK_OR) (*T)=(*T)->parent;
+                    }
                     newT->parent=(*T)->parent;
                     if (newT->parent!=NULL) {
                         if (newT->parent->left==(*T)) newT->parent->left=newT;
@@ -318,6 +380,12 @@ void ParseMorpheme(char* S, ParseStates* state, Tree** T){
                     break;
                 case REDIRECT:
                     *state=REDIR;
+                    break;
+                case SUBSHELL_END:
+                    *T=(*T)->parent;
+                    while((*T)!=NULL &&((*T)->type!=LINK_SUBSHELL)) *T=(*T)->parent;
+                    if (*T==NULL) *state=PARSEERROR;
+                    else *state=AFTERSUBSHELL;
                     break;
                 default:
                     *state=PARSEERROR;
@@ -365,6 +433,20 @@ Tree* ParseBuildTree(List* L,Err* E){
     Told=T;
     while (T->parent!=NULL) T=T->parent;
     ParseTreeFixNULL(T);
+    return T;
+}
+
+Tree* ParseFull(char* c, Err* E){
+    Tree* T;
+    List* L=ParseBuildList(c,E);
+    E->pres=0;
+    if (E->pres==1) {
+        return NULL;
+    }
+    T=ParseBuildTree(L,E);
+    if (E->pres==1) {
+        return NULL;
+    }
     return T;
 }
 

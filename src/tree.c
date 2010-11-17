@@ -10,6 +10,7 @@ Tree* TreeInit(){
     T->left=NULL; T->right=NULL;
     T->cmd=NULL;
     T->parent=NULL;
+    T->insaved=-1; T->outsaved=-1;
     return T;
 }
 
