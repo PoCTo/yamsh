@@ -36,10 +36,10 @@ void printtree(Tree* T, FILE* f){
     
     if (T==NULL){ return; }
     printnode(T,f);
-    if (T->left!=NULL)
-        printf("node%d -> node%d;\n",(int)T,(int)T->left);
-    if (T->right!=NULL)
-        printf("node%d -> node%d;\n",(int)T,(int)T->right);
+    if ((T->left)!=NULL)
+        printf("node%d -> node%d;\n",(int)T,(int)(T->left));
+    if ((T->right)!=NULL)
+        printf("node%d -> node%d;\n",(int)T,(int)(T->right));
     printtree(T->left,f);
     printtree(T->right,f);
     //fclose(f);
@@ -47,9 +47,9 @@ void printtree(Tree* T, FILE* f){
 
 void printcommandtree(char* cmd, char* file){
     Err* E=ErrInit();
-    FILE *f=NULL;
+    //FILE *f=NULL;
     Tree* T=ParseFull(cmd,E);
-    if (E->pres==0) ErrFree(E);
+    if ((E->pres)==0) ErrFree(E);
     else {
         //f=fopen(file,"w");
         //if (f<0) perror("Debug file open");

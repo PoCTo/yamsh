@@ -26,20 +26,32 @@ char **BuildPtr(char* cmd, List* args){
     len=i+2;
     s[0]=NULL;
     
-    for (i=1; i<=len; i++) s[i]=NULL;
+    for (i=1; i<len; i++) s[i]=NULL;
     i=1; L=args;
     while (L!=NULL){
         StringPut(&(s[i]),(char*)L->data);
         i++;
-        L=L->next; 
+        L=(L->next);
     }
     StringPut(&(s[0]),cmd);
     return s;    
 }
 
+void FreePtr(char** argsptr, List* args){
+    int i=0,len=0; List* L=args;
+    if (argsptr==NULL) return;
+    if (*argsptr==NULL) return;
+    while (L!=NULL){
+        i++; L=L->next;
+    }
+    len=i+2;
+    for (i=0;i<len;i++) free((argsptr)[i]);
+    free(argsptr);
+}
+
 int ExecSetRedirections(Tree* T){
     int innew,outnew;
-    if (T->in!=NULL){
+    if ((T->in)!=NULL){
         if (file_exists(T->in)){
             T->insaved=dup(0);
             innew=open(T->in,O_RDONLY);
@@ -48,7 +60,7 @@ int ExecSetRedirections(Tree* T){
             close(innew);
         }
     }
-    if (T->out!=NULL && T->append==NULL){
+    if ((T->out)!=NULL && (T->append)==NULL){
         outnew=open(T->out,O_WRONLY|O_CREAT,0666);
         T->outsaved=dup(1);
         if (outnew<0){ perror("ExecSetRedirections"); return 1;}
@@ -56,11 +68,11 @@ int ExecSetRedirections(Tree* T){
         close(outnew);
         return 0;
     }
-    if (T->out!=NULL && T->append!=NULL) ExecError(">> and > cannot be set"
+    if ((T->out)!=NULL && (T->append)!=NULL) ExecError(">> and > cannot be set"
             "at once. Using >>.");
-    if(T->append!=NULL){
-        outnew=open(T->out,O_WRONLY|O_CREAT|O_APPEND,0666);
-        T->outsaved=dup(1);
+    if((T->append)!=NULL){
+        outnew=open(T->append,O_WRONLY|O_CREAT|O_APPEND,0666);
+        (T->outsaved)=dup(1);
         if (outnew<0){ perror("ExecSetRedirections"); return 1;}
         if (dup2(outnew,1)<0) { perror("ExecSetRedirections"); return 1;}
         close(outnew);
@@ -70,23 +82,23 @@ int ExecSetRedirections(Tree* T){
 }
 
 int ExecKillRedirections(Tree* T){
-    if (T->insaved!=-1){
+    if ((T->insaved)!=-1){
         close(0);
         if (dup2(T->insaved,0)<0) { perror("ExecKillRedirections"); return 1;}
         close(T->insaved);
-        T->insaved=-1;
+        (T->insaved)=-1;
     }
-    if (T->outsaved!=-1){
+    if ((T->outsaved)!=-1){
         close(1);
         if (dup2(T->outsaved,1)<0) { perror("ExecKillRedirections"); return 1;}
         close(T->outsaved);
-        T->outsaved=-1;
+        (T->outsaved)=-1;
     }
     return 0;
 }
 
 int ExecSetWritePipe(Tree* T, int p[2]){
-    T->outsaved=dup(1);
+    (T->outsaved)=dup(1);
     if (dup2(p[1],1)<0) { perror("ExecSetWritePipe"); return 1;}
     close(p[0]);
     close(T->outsaved);
@@ -103,14 +115,19 @@ int ExecSetReadPipe(Tree* T, int p[2]){
 int ExecuteCmd(char* c){
     Err* E=ErrInit();
     Tree* T=ParseFull(c,E);
-    if (E->pres==1){
+    int status=0;
+    if ((E->pres)==1){
+        TreeFree(T);
         ExecError("Can not run command");
         ExecError(E->err);
+        ErrFree(E);
         return -1;
     } else {
-        return ExecuteTree(T);
-    }
-    TreeFree(T);
+        status=ExecuteTree(T);
+        TreeFree(T);
+        ErrFree(E);
+        return status;
+    }    
 }
 
 int ExecuteTree(Tree* T){
@@ -131,7 +148,7 @@ int ExecuteTree(Tree* T){
                     break;
                 case 0:
                     //printf("i'm child %s!\n",T->cmd);
-                    //printf("baba %s\n",(BuildPtr(T->cmd,T->args))[0]);
+                    //printf("baba %s\n",(BuildPtr(T->cmd,T->args))[0]); 
                     execvp(T->cmd,argsptr);
                     perror("exec");
                     ExecError("Cannot fork to start program!");
@@ -145,6 +162,7 @@ int ExecuteTree(Tree* T){
                     //fprintf(stderr,"%s,%s\n",*(&(argsptr[0])),argsptr[1]);
                     //for (i=0;(argsptr[i])!=NULL;i++) free(argsptr[i]);
                     //free(argsptr);
+                    FreePtr(argsptr,T->args);
                     return status;
             }
             break;
@@ -186,7 +204,7 @@ int ExecuteTree(Tree* T){
                         break;
                     case 0: //son
                         ExecSetWritePipe(T,p);
-                        _exit(ExecuteTree(T->left));
+                        exit(ExecuteTree(T->left));
                         break;
                     default: //father
                         switch(pid2=fork()){
@@ -196,7 +214,7 @@ int ExecuteTree(Tree* T){
                             case 0:
                                 if (T->right==NULL) return 0;
                                 ExecSetReadPipe(T,p);
-                                _exit(ExecuteTree(T->right));
+                                exit(ExecuteTree(T->right));
                                 break;
                             default: //father
                                 close(p[1]); close(p[0]);
@@ -218,7 +236,8 @@ int ExecuteTree(Tree* T){
                 }
             }
         case LINK_BACKGROUND:
-            switch (pid1=fork()){
+            pid1=fork();
+            switch (pid1){
                 case -1:
                     perror("Exec B-G");
                     break;
@@ -238,10 +257,10 @@ int ExecuteTree(Tree* T){
                             break;
                     }
                     break;*/
-                    fprintf(stderr, "[BG] Spawned process [%d]\n",pid);
+                    fprintf(stderr, "[BG] Spawned process [%d]\n",pid1);
                     if (T->left!=NULL) status=ExecuteTree(T->left);
                     else status=0;
-                    fprintf(stderr,"[BG] Child [%d] exited with code %d\n",pid,status);
+                    fprintf(stderr,"[BG] Child [%d] exited with code %d\n",pid1,status);
                     exit(status);
                 default:
                     if (T->right!=NULL) return ExecuteTree(T->right);

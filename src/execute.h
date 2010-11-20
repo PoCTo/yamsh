@@ -15,5 +15,6 @@
 #include "parse.h"
 
 int ExecuteTree(Tree* T);
+int ExecuteCmd(char* c);
 #endif	/* EXECUTE_H */
 

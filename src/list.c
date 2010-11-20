@@ -12,7 +12,7 @@ List* ListInit(){
 
 /* Puts string into List Node */
 void ListPutDataStr(List* L, char* data){
-	L->data=(char*) myrealloc(L->data,strlen(data));
+	L->data=(char*) myrealloc(L->data,strlen(data)+1);
 	strcpy(L->data,data);
 }
 

@@ -1,5 +1,7 @@
+CC=gcc
+
 default: 
-	gcc-4 src/*.c -O0 -g -Wall -o build/yamsh
+	${CC} src/*.c -O0 -g -Wall -o build/yamsh
 	
 
 all: yamsh

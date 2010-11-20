@@ -2,6 +2,7 @@
 
 /* Reallocates memory with error message if needed */
 void* myrealloc(void *ptr, size_t size){
+/*	printf("%d\n",(int)ptr);*/
 	if (ptr == NULL)
           return malloc(size);
        else

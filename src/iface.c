@@ -5,15 +5,16 @@ char* IfaceReadStr(){
 	char* tmp;
 	int curlen;
 	res=(char*)malloc(1);
-	res[0]=0;
+	res[0]=0; 
 	tmp=(char*) malloc(PARTSIZE+5);
-	while(res[strlen(res)-1]!='\n'){
+	while((strlen(res)==0)||(res[strlen(res)-1]!='\n')){
 		fgets(tmp,PARTSIZE,stdin);
 		curlen=strlen(res);
-		res=realloc(res,strlen(res)+strlen(tmp)+1);
+		res=realloc(res,strlen(res)+strlen(tmp)+2);
 		strcpy(res+strlen(res),tmp);
 	}
 	res[strlen(res)-1]='\0';
+        myfree(tmp);
 	return res;
 }
 
@@ -32,6 +33,6 @@ void IfaceRun(){
         ExecuteCmd(s);
         myfree(s);
         IfaceInvitation();
-        IfaceReadStr();
+        s=IfaceReadStr();
     }
 }

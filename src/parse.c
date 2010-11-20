@@ -23,7 +23,7 @@ int CharOp(char c){
 }
 
 Str* ParseLex(char* s,Err* err,int* i){
-    int len=strlen(s);
+    int len=0;
     static char op='\0';
     Str* S=NULL;
     S=StrInit();
@@ -31,6 +31,7 @@ Str* ParseLex(char* s,Err* err,int* i){
     char c;
     ParseLexStates prevstate,state=BLANK;
     
+    if (s!=NULL) len=strlen(s); else return NULL;
     while ((*i)<len && s[*i]==' ') (*i)++;
     for (;(state!=ERROR && (*i)<=len);){
         c=s[*i];
@@ -107,8 +108,8 @@ Str* ParseLex(char* s,Err* err,int* i){
         if (state==ERROR){
             if (prevstate==QUOTE) {
                 err->pres=1;
-                err->err=myrealloc(err->err,50);
-                err->err="Unfinished Quote\0";
+                (err->err)=myrealloc(err->err,50);
+                strcpy(err->err,"Unfinished Quote\0");
             }
             i=NULL;
             return NULL;
@@ -133,7 +134,7 @@ List* ParseBuildList(char* s, Err* err){
     List* L=NULL,*Lold=NULL;
     int i=0,iold=0; Str* S=NULL; Err* err2=ErrInit();
     i=0;
-    while (i<strlen(s)){
+    while ((s!=NULL)&&(i<strlen(s))){
         iold=i;
         
         S=ParseLex(s, err,&i);
@@ -354,7 +355,7 @@ void ParseTreeFixNULL(Tree* T){
 
 Tree* ParseBuildTree(List* L,Err* E){
     if (L==NULL) return NULL;
-    List* Lold;
+    List* Lold=L;
     Tree* Told;
     Tree* T=TreeInit();
     ParseStates state=CMD;
@@ -366,9 +367,11 @@ Tree* ParseBuildTree(List* L,Err* E){
     }
     ParseMorpheme(")",&state,&T);
     if (state==PARSEERROR){
+        if (T!=NULL) while (T->parent!=NULL) T=T->parent;
+        TreeFree(T);
         E->pres=1;
         E->err=realloc(E->err,(50+strlen(Lold->data)*sizeof(char)));
-        E->err="Syntax error near: \0";
+        strcpy(E->err,"Syntax error near: \0");
         strcpy((E->err)+strlen(E->err),(char*)Lold->data);
         return NULL;
     }
@@ -381,14 +384,14 @@ Tree* ParseBuildTree(List* L,Err* E){
 Tree* ParseFull(char* c, Err* E){
     Tree* T;
     List* L=ParseBuildList(c,E);
-    E->pres=0;
-    if (E->pres==1) {
+    (E->pres)=0;
+    if ((E->pres)==1) {
         ListClear(L);
         return NULL;
     }
     T=ParseBuildTree(L,E);
     ListClear(L);
-    if (E->pres==1) {
+    if ((E->pres)==1) {
         TreeFree(T);
         return NULL;
     }

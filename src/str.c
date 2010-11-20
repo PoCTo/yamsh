@@ -19,7 +19,7 @@ Err* ErrInit(){
 }
 
 void ErrFree(Err* E){
-    myfree(E->err);
+    if (E!=NULL) myfree(E->err);
     myfree(E);
 }
 
@@ -43,7 +43,8 @@ char StrLast(Str* S){
 }
 
 void StringPut(char** dest,char* src){
-    *dest=(char*)myrealloc(*dest,strlen(src)*sizeof(char));
+    if (src==NULL) return;
+    *dest=(char*)myrealloc(*dest,(strlen(src)+1)*sizeof(char));
     strcpy(*dest,src);
 }
 
