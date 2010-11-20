@@ -137,6 +137,7 @@ int ExecuteTree(Tree* T){
     int status=0,stat1=0,stat2=0;
     char **argsptr;
     
+    if (T==NULL) return 0;
     switch (T->type){
         case LINK_COMMAND:
             if (ExecSetRedirections(T)!=0)
@@ -171,8 +172,7 @@ int ExecuteTree(Tree* T){
                 ExecError("Can not set redirections! Continuing w/o, be care!\n");
 
             if (T->left==NULL || T->right!=NULL){
-                ExecError("Unknown algorithm error!");
-                return 1;
+                return 0;
             }
             else {
                 status=ExecuteTree(T->left);

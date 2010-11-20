@@ -36,3 +36,5 @@ clean:
 	rm -rf *.dump
 	rm -rf *.stackdump	
 	rm -rf src/*.o
+	rm -rf build/yamsh
+	rm -rf build/util/*
