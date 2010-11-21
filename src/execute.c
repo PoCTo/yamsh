@@ -10,8 +10,6 @@ int file_exists(char * fileName){
    return 0;
 }
 
-
-
 void ExecError(char* s){
     fprintf(stderr,"%s\n",s);
 }
@@ -130,9 +128,10 @@ int ExecSetReadPipe(Tree* T, int p[2]){
     return 0;
 }
 
-int ExecuteCmd(char* c){
+int ExecuteCmd(char* c){    
     Err* E=ErrInit();
     Tree* T=ParseFull(c,E);
+    printcommandtree(c);
     int status=0;
     if ((E->pres)==1){
         TreeFree(T);

@@ -13,6 +13,7 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include "parse.h"
+#include "debug.h"
 
 int ExecuteTree(Tree* T);
 int ExecuteCmd(char* c);

@@ -8,6 +8,6 @@
 
 void printnode(Tree* T, FILE* f);
 void printtree(Tree* T, FILE* file);
-void printcommandtree(char* cmd, char* file);
+void printcommandtree(char* cmd);
 #endif	/* DEBUG_H */
 
