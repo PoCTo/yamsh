@@ -6,17 +6,18 @@
 #include <sys/stat.h>
 #include <pwd.h>
 #include <grp.h>
+#include <unistd.h>
 
 int R=0,l=0,g=0;
 int notoptions=0;
 
 void listfile(char* res, struct dirent* cur){
     struct stat s;
-    char* d=NULL;
     if(stat(res,&s)==-1){
         perror(cur->d_name);
         return;
     }
+    printf("%s ",cur->d_name);
     switch((s.st_mode & S_IFMT)){
         case S_IFDIR:
             if (l) printf("D ");
@@ -26,30 +27,48 @@ void listfile(char* res, struct dirent* cur){
         default:
             if (l) printf("F ");
     }
-    printf("%s ",cur->d_name);
-    if (l) printf("%d",s.st_size);
+    if (l) printf("%ld",s.st_size);
     if (l) printf("b ");
     if (l) printf("%o ",s.st_mode & 0777);
     if (l) printf("%s ",(getpwuid(s.st_uid))->pw_name);
     if (l||g) printf("%s\n",(getgrgid(s.st_gid))->gr_name);
 }
 
-void list(char* dir){
-    DIR* D=opendir(dir);
+char* gpwd(){
+    char* buf=NULL; int size=8;
+    char* cwd;
+    while ((cwd=getcwd(buf,size))==NULL){
+        free(buf); buf=NULL;
+        size*=2;
+    }
+    return cwd;
+}
+
+void list(char* dir,char* ress){
+    DIR* D=NULL;
+    char* res=NULL,*oldpwd=NULL;
     struct dirent* cur;
     struct stat s;
     notoptions++;
 
-    if (strcmp(dir,"./")) printf("%s\n",dir);
+    if (strcmp(dir,".")){
+        oldpwd=gpwd();
+        if (chdir(dir)==-1){
+            perror("ChangeDir");
+            return;
+        }
+	}
+    
+    D=opendir(".");
     if (D==NULL){
         perror("ls");
+        return;
     }
 
     while((cur=readdir(D))!=NULL){
-        char* res=NULL;
-
-        res=(char*)realloc(res,strlen(dir)+strlen(cur->d_name)+3);
-        strcpy(res+strlen(res),dir);
+        res=(char*)realloc(res,strlen(dir)+strlen(cur->d_name)+2);
+        res[0]='\0';
+        strcpy(res,dir);
         strcpy(res+strlen(res),"/");
         strcpy(res+strlen(res),cur->d_name);
 
@@ -59,15 +78,50 @@ void list(char* dir){
         } else {
             if ((s.st_mode & S_IFMT) == S_IFDIR
                     && strcmp(cur->d_name,".")&& strcmp(cur->d_name,"..")){
-                
-                list(res);
+                if (R) chdir(cur->d_name);
+                if (R) list(".",res);
+                if (R) chdir("..");
             }
-        listfile(res,cur);
+        
         }
-        free(res);
-        res=NULL;
+        //free(res);
+        //res=NULL;
     }
     closedir(D);
+    if (R) printf("%s:\n",ress);
+    D=opendir(".");    
+    while((cur=readdir(D))!=NULL){
+        res=(char*)realloc(res,strlen(dir)+strlen(cur->d_name)+2);
+        res[0]='\0';
+        strcpy(res,dir);
+        strcpy(res+strlen(res),"/");
+        strcpy(res+strlen(res),cur->d_name);
+        
+        if (!strcmp(cur->d_name,".")|| !strcmp(cur->d_name,"..")) continue;
+        
+        if(stat(cur->d_name,&s)==-1){
+            perror(cur->d_name);
+            return;
+        } else {
+            listfile(cur->d_name,cur);
+        
+        }
+        //free(res);
+        //res=NULL;
+    }
+    closedir(D);
+    printf("\n");
+    
+    
+    if (strcmp(dir,".")){
+        if (chdir(oldpwd)==-1){
+            perror("Getting back to dir");
+            exit(1);
+        }
+        free(oldpwd);
+        oldpwd=NULL;
+    }
+    free(res);
 }
 
 void parseargopt(char* s){
@@ -87,16 +141,18 @@ void parseargopt(char* s){
 
 void parseargnotopt(char* s){
     if ((strlen(s))<=0) return;
-    if (s[0]!='-') list(s);
+    if (s[0]!='-') list(s,s);
 }
 
 int main(int argc, char** argv){
+    //R=1;
     int i;
     if (argc>1){
         for (i=1; i<argc; i++) parseargopt(argv[i]);
         for (i=1; i<argc; i++) parseargnotopt(argv[i]);
     }
     if (!notoptions){
-        list("./");
+        list(".",".");
     }
+    return 0;
 }

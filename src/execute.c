@@ -10,8 +10,26 @@ int file_exists(char * fileName){
    return 0;
 }
 
+
+
 void ExecError(char* s){
     fprintf(stderr,"%s\n",s);
+}
+
+int cd(char** argv){
+    if (argv[0]==NULL || argv[1]==NULL) {
+        ExecError("cd: no arguments provided");
+        return 1;
+    }
+    if (argv[2]!=NULL){
+        ExecError("cd: too many arguments provided");
+        return 1;
+    }
+    if (chdir(argv[1])==-1){
+        perror("cd");
+        return 1;
+    }
+    return 0;
 }
 
 char **BuildPtr(char* cmd, List* args){
@@ -143,7 +161,7 @@ int ExecuteTree(Tree* T){
             if (ExecSetRedirections(T)!=0)
                 ExecError("Can not set redirections! Continuing w/o, be care!\n");
             argsptr=BuildPtr(T->cmd,T->args);
-            switch (fork()){
+            if (strcmp(T->cmd,"cd")) switch (fork()){
                 case -1:
                     perror("Forking Command");
                     break;
@@ -165,7 +183,10 @@ int ExecuteTree(Tree* T){
                     //free(argsptr);
                     FreePtr(argsptr,T->args);
                     return status;
-            }
+            } else {
+                status=cd(argsptr);
+                FreePtr(argsptr,T->args);
+            } 
             break;
         case LINK_SUBSHELL:
             if (ExecSetRedirections(T)!=0)

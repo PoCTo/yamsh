@@ -1,8 +1,9 @@
-CC=gcc
+#CC=clang
 
 default: 
-	${CC} src/*.c -O0 -g -Wall -o build/yamsh
-	
+	${CC} src/*.c -g -Wall -o build/yamsh
+	${CC} src/util/ls.c -g -Wall -o build/util/ls
+	${CC} src/util/pwd.c -g -Wall -o build/util/pwd
 
 all: yamsh
 

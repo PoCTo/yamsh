@@ -10,4 +10,7 @@ int main(){
         size*=2;
     }
     printf("%s\n",cwd);
+    free(cwd);
+    
+    return 0;
 }
