@@ -8,6 +8,7 @@ default:
 	${CC} src/util/mv.c -g -Wall -o build/util/mv
 	${CC} src/util/ln.c -g -Wall -o build/util/ln
 	${CC} src/util/wc.c -g -Wall -o build/util/wc
+	${CC} src/util/cat.c -g -Wall -o build/util/cat
 
 all: yamsh
 
