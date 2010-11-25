@@ -9,6 +9,7 @@ default:
 	${CC} src/util/ln.c -g -Wall -o build/util/ln
 	${CC} src/util/wc.c -g -Wall -o build/util/wc
 	${CC} src/util/cat.c -g -Wall -o build/util/cat
+	${CC} src/util/grep.c -g -Wall -o build/util/grep
 
 all: yamsh
 
